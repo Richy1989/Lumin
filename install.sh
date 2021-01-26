@@ -31,14 +31,13 @@ WriteServiceFile () {
 }
 #Creates a Directory and sets the permissions and owing to the selected user
 #Parameters: 1. Folder Path, 2. User
-MakeDirWithUserPermissions () {
+ChangeToUserPermissions () {
 	local folder 
 	local userName 
 	folder=$1
 	userName = $2
 	
-	mkdir $folder
-	chown $userName":"$userName $usernName
+	chown $userName":"$userName $userName
 	chmod -R 0755 $folder
 }
 
@@ -116,7 +115,7 @@ ufw allow $signalPort
 #write config file to: luminConfigPath
 
 #Create Config Folder
-MakeDirWithUserPermissions $luminConfigFolder $userName
+mkdir $luminConfigFolder
 
 echo '#CONFIG FILE Start' > $luminConfigPath
 echo '#-------------------------------------------' >> $luminConfigPath
@@ -131,6 +130,9 @@ echo 'DiscoveryPort='$discoveryPort >> $luminConfigPath
 echo '#-------------------------------------------' >> $luminConfigPath
 echo '#CONFIG FILE End' >> $luminConfigPath
 
+#Change config to user permissions
+ChangeToUserPermissions $installPath $userName
+
 #write GPIO and SPI files, add users to enable SPI and GPIO | Path: /etc/udev/rules.d/
 groupadd spiuser
 adduser "$USER" spiuser
@@ -143,7 +145,7 @@ apt install libgpiod2 -y
 WriteServiceFile $serverServicePath $installPath $dotnetPath $luminServerDllName $userName
 
 #Clone, publish and install binaries
-MakeDirWithUserPermissions $installPath $userName
+mkdir $installPath
 tempFolder=".lumin_temp"
 #Create Temp Folder
 MakeDirWithUserPermissions $tempFolder $userName
@@ -153,6 +155,8 @@ dotnet publish "Lumin/LuminServer/LuminServer.csproj"
 actualFolder=$(pwd)
 cd "Lumin/LuminServer/bin/Debug/net5.0/publish/"
 cp -R * $installPath
+#Change installpath to user permissions
+ChangeToUserPermissions $installPath $userName
 cd $actualFolder
 cd ".."
 rm -r -f $tempFolder
