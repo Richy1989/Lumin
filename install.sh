@@ -90,12 +90,12 @@ hashOutput=$(hash dotnet)
 netCoreDownloadFileName="dotnet-sdk-5.0.102-linux-arm64.tar.gz"
 
 #check and install dotNet 5.0
-CheckForProgram "dotnet"
-if [ $? ]
+isInstalled=$(CheckForProgram "dotnet")
+if [ $isInstalled ]
 then
 	dotnetPath=$(which dotnet)
 else
-	wget https://download.visualstudio.microsoft.com/download/pr/4fdd4708-8990-42db-998d-36ccfa593070/d67cb90c382e4eedbca8af1aebcbbe19/dotnet-sdk-5.0.102-linux-arm64.tar.gz
+	wget "https://download.visualstudio.microsoft.com/download/pr/4fdd4708-8990-42db-998d-36ccfa593070/d67cb90c382e4eedbca8af1aebcbbe19/dotnet-sdk-5.0.102-linux-arm64.tar.gz"
 	mkdir $dotnetPath
 	export PATH=$PATH:$dotnetPath
 	export DOTNET_ROOT=$dotnetPath/dotnet
