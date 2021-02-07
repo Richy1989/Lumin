@@ -50,7 +50,7 @@ namespace LuminCommon.GlobalEvents
 
             //Remove null values from dictionary, cause the unregister function is not mandatory
             //Note: we do this after executing the event to not delay the invoking of the global events
-            eventDictionary = eventDictionary.Where(s => s.Value.callback == null).ToDictionary(k => k.Key, v => v.Value);
+            eventDictionary = eventDictionary.Where(s => s.Value.callback != null).ToDictionary(k => k.Key, v => v.Value);
         }
     }
 }
