@@ -38,20 +38,20 @@ namespace HeliosService
             //Start the discovery service to find server IP
             services.AddHostedService<DiscroveryServer>();
 
-            //////Create an LED Controller
-            ////services.AddSingleton<ILedController, LedAPA102Controller>();
+            //Create an LED Controller
+            services.AddSingleton<ILedController, LedAPA102Controller>();
 
-            //////Create the Lumin Manager, manages the LED Connection
-            ////services.AddSingleton<ILuminManager, LuminManager>();
+            //Create the Lumin Manager, manages the LED Connection
+            services.AddSingleton<ILuminManager, LuminManager>();
 
             //Initialize the SignaR Server
             services.AddSignalR(options => { options.EnableDetailedErrors = true; });
 
-            //////Start the GPIO watch server, to listen on physical button touch
-            ////services.AddHostedService<GpioService>();
+            //Start the GPIO watch server, to listen on physical button touch
+            services.AddHostedService<GpioService>();
 
-            //////Start the lumin client, which is the local LED Client, listening to SignaR commands
-            ////services.AddHostedService<LuminClientService>();
+            //Start the lumin client, which is the local LED Client, listening to SignaR commands
+            services.AddHostedService<LuminClientService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
