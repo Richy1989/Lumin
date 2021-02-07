@@ -7,6 +7,7 @@ using LuminCommon.Attributes;
 using LuminCommon.Configurator;
 using LuminCommon.Enumerations;
 using LuminCommon.EventArgs;
+using LuminCommon.GlobalEvents;
 using LuminCommon.Helper;
 using LuminCommon.Interfaces;
 using LuminCommon.LedCommon;
@@ -45,7 +46,7 @@ namespace HeliosClockAPIStandard
 
         /// <summary>Initializes a new instance of the <see cref="HeliosManager"/> class.</summary>
         /// <param name="ledController">The led controller.</param>
-        public LuminManager(ILedController ledController, ILuminConfiguration luminConfiguration, ILogger<LuminManager> logger)
+        public LuminManager(ILedController ledController, ILuminConfiguration luminConfiguration, IGlobalEventManager globalEventManager, ILogger<LuminManager> logger)
         {
             RefreshSpeed = 100;
             LedController = ledController;
@@ -60,6 +61,13 @@ namespace HeliosClockAPIStandard
                 if (e.Args == nameof(luminConfiguration.AutoOffTime))
                     CreateAutoOffTimer();
             };
+
+            //Wait for application shutdown. Turn off lights on shutdown.
+            globalEventManager.Register(GlobalEvents.ApplicationShutDown, () =>
+            {
+                logger.LogInformation("Shutdown of client detected. Turn off! ...");
+                AutoOffTmer_Elapsed(this, null);
+            });
 
             logger.LogInformation("Lumin Manager Initialized ...");
         }

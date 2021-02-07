@@ -29,7 +29,7 @@ WriteServiceFile () {
 	echo '[Install]' >> $servicePath
 	echo 'WantedBy=multi-user.target' >> $servicePath
 }
-#Creates a Directory and sets the permissions and owing to the selected user
+#Sets the permissions and owning to the selected user
 #Parameters: 1. Folder Path, 2. User
 ChangeToUserPermissions () {
 	local folder 
@@ -105,7 +105,7 @@ else
 	ln "-s" $dotnetPath"/dotnet" "/usr/bin/dotnet"
 fi
 
-echo "dotNet path is at: "$dotnetPath 
+echo "Dotnet path is at: "$dotnetPath 
 
 #open ports in firewall
 ufw allow $discoveryPort
@@ -132,15 +132,15 @@ echo '#CONFIG FILE End' >> $luminConfigPath
 #Change config to user permissions
 ChangeToUserPermissions $installPath $userName
 
-#write GPIO and SPI files, add users to enable SPI and GPIO | Path: /etc/udev/rules.d/
+#Write GPIO and SPI files, add users to enable SPI and GPIO | Path: /etc/udev/rules.d/
 groupadd spiuser
 adduser "$USER" spiuser
 echo 'SUBSYSTEM=="spidev", GROUP="spiuser", MODE="0660"' > $spiDeviceRule
 
-#install "libgpiod" --> see here: https://ubuntu.pkgs.org/20.04/ubuntu-universe-amd64/libgpiod-dev_1.4.1-4_amd64.deb.html
+#Install "libgpiod" --> see here: https://ubuntu.pkgs.org/20.04/ubuntu-universe-amd64/libgpiod-dev_1.4.1-4_amd64.deb.html
 apt install libgpiod2 -y
 
-# Create Server Service File / Enable and Start Service (systemctl)
+#Create Server Service File / Enable and Start Service (systemctl)
 WriteServiceFile $serverServicePath $installPath $dotnetPath $luminServerDllName $userName
 
 #Clone, publish and install binaries

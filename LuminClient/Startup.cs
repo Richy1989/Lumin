@@ -3,6 +3,7 @@ using HeliosClockAPIStandard.Controller;
 using LuminCommon.Clients;
 using LuminCommon.Configurator;
 using LuminCommon.Discorvery;
+using LuminCommon.GlobalEvents;
 using LuminCommon.Interfaces;
 using LuminCommon.LedCommon;
 using Microsoft.AspNetCore.Builder;
@@ -25,6 +26,9 @@ namespace LuminClient
             //Starting the configuration service
             services.AddHostedService<ConfigureService>();
 
+            //Add the global event manager
+            services.AddSingleton<IGlobalEventManager, GlobalEventManager>();
+
             //Starting discover factory, creates the unique UDP Client
             services.AddSingleton<DiscoverFactory>();
 
@@ -39,7 +43,7 @@ namespace LuminClient
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime)
         {
             if (env.IsDevelopment())
             {
@@ -55,6 +59,10 @@ namespace LuminClient
                     await context.Response.WriteAsync("Hello World!");
                 });
             });
+
+            //Register Application Shutdown Listening
+            var eventManager = app.ApplicationServices.GetService<IGlobalEventManager>();
+            lifetime.ApplicationStopping.Register(() => eventManager.ThrowGlobalEvent(GlobalEvents.ApplicationShutDown));
         }
     }
 }
