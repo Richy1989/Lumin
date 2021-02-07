@@ -258,12 +258,19 @@ namespace LuminCommon.Clients
                 logger.LogDebug("Error closing old connection. Message: {0} ...", ex.Message);
             }
 
-            connection = new HubConnectionBuilder().WithUrl(URL).WithAutomaticReconnect().Build();
+            try
+            {
+                connection = new HubConnectionBuilder().WithUrl(URL).WithAutomaticReconnect().Build();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Fatal!! HubConnectionBuilder cannot be created. Message: {0} ...", ex.Message);
+                return;
+            }
 
             await Task.Run(async () =>
             {
                 Initialize();
-
                 logger.LogInformation("Local Client: Connecting ...");
 
                 // Loop is here to wait until the server is running
@@ -271,7 +278,9 @@ namespace LuminCommon.Clients
                 {
                     try
                     {
-                        await connection.StartAsync(parentCancellationToken).ConfigureAwait(false); ;
+                        logger.LogDebug("Starting Client connection async ...");
+                        await connection.StartAsync(parentCancellationToken).ConfigureAwait(false);
+                        logger.LogDebug("Client connection started ...");
 
                         while (connection.State == HubConnectionState.Connecting && !parentCancellationToken.IsCancellationRequested && !localCancellationToken.IsCancellationRequested)
                         {
