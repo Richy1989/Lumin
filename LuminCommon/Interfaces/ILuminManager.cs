@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LuminCommon.Interfaces
 {
-    public interface ILuminManager
+    public interface ILuminManager : IDisposable
     {
         /// <summary>Occurs when [notify controller].</summary>
         event EventHandler<NotifyControllerEventArgs> NotifyController;

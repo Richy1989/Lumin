@@ -73,9 +73,9 @@ namespace HeliosService
                 });
             });
 
-            //Register Application Shutdown Listening
-            var eventManager = app.ApplicationServices.GetService<IGlobalEventManager>();
-            lifetime.ApplicationStopping.Register(()=> eventManager.ThrowGlobalEvent(GlobalEvents.ApplicationShutDown));
+            //////Register Application Shutdown Listening
+            ////var eventManager = app.ApplicationServices.GetService<IGlobalEventManager>();
+            ////lifetime.ApplicationStopping.Register(()=> eventManager.ThrowGlobalEvent(GlobalEvents.ApplicationShutDown));
         }
     }
 }

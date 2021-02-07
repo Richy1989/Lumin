@@ -20,7 +20,7 @@ namespace HeliosClockAPIStandard
         private System.Timers.Timer autoOffTmer;
         private CancellationTokenSource cancellationTokenSource;
         private CancellationToken cancellationToken;
-        private ILuminConfiguration luminConfiguration;
+        private readonly ILuminConfiguration luminConfiguration;
         public event EventHandler<NotifyControllerEventArgs> NotifyController;
         private readonly ILogger<LuminManager> logger;
         public ILedController LedController { get; set; }
@@ -62,16 +62,10 @@ namespace HeliosClockAPIStandard
                     CreateAutoOffTimer();
             };
 
-            //Wait for application shutdown. Turn off lights on shutdown.
-            globalEventManager.Register(GlobalEvents.ApplicationShutDown, () =>
-            {
-                logger.LogInformation("Shutdown of client detected. Turn off! ...");
-                AutoOffTmer_Elapsed(this, null);
-            });
-
             logger.LogInformation("Lumin Manager Initialized ...");
         }
 
+        /// <summary>Creates the automatic off timer.</summary>
         private void CreateAutoOffTimer()
         {
             double timeInHours = luminConfiguration.AutoOffTime;
@@ -369,6 +363,30 @@ namespace HeliosClockAPIStandard
                     await Task.Delay(RefreshSpeed, cancellationToken).ConfigureAwait(false);
                 }
             }, cancellationToken);
+        }
+
+        /// <summary>Disposes the specified disposing.</summary>
+        /// <param name="disposing">if set to <c>true</c> [disposing].</param>
+        protected virtual async void Dispose(bool disposing)
+        {
+            await StopLedMode().ConfigureAwait(false);
+
+            logger?.LogInformation("Disposing Client. Turn off! ...");
+
+            //Turning LEDs off.
+            AutoOffTmer_Elapsed(this, null);
+            autoOffTmer?.Stop();
+            autoOffTmer?.Dispose();
+
+            LedController?.Dispose();
+        }
+
+        public void Dispose()
+        {
+            // Dispose of unmanaged resources.
+            Dispose(true);
+            // Suppress finalization.
+            GC.SuppressFinalize(this);
         }
     }
 }

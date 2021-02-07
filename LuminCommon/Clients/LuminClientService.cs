@@ -300,8 +300,11 @@ namespace LuminCommon.Clients
         {
             isConnecting = false;
             localCancellationTokenSource?.Cancel();
-            logger.LogInformation("Stopping Lumin Client ...");
+            logger?.LogInformation("Stopping Lumin Client ...");
             await connection.DisposeAsync().ConfigureAwait(false);
+
+            //Dispose the manager
+            manager?.Dispose();
         }
     }
 }
