@@ -100,7 +100,9 @@ namespace HeliosClockAPIStandard
         /// <param name="e">The <see cref="System.Timers.ElapsedEventArgs"/> instance containing the event data.</param>
         private async void AutoOffTmer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            logger.LogDebug("AutoOff Timer Invoked ...");
+            if (e != null)
+                logger.LogDebug("AutoOff Timer Invoked ...");
+
             await SetOnOff(PowerOnOff.Off, LedSide.Full, Color.Black).ConfigureAwait(false);
             Brightness = 255;
         }
@@ -381,6 +383,7 @@ namespace HeliosClockAPIStandard
             LedController?.Dispose();
         }
 
+        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         public void Dispose()
         {
             // Dispose of unmanaged resources.

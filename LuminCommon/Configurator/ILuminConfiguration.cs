@@ -24,5 +24,13 @@ namespace LuminCommon.Configurator
         /// <summary>Gets or sets the discovery port.</summary>
         /// <value>The discovery port.</value>
         int DiscoveryPort { get; set; }
+
+        /// <summary>Gets or sets the GPIO right pin.</summary>
+        /// <value>The GPIO right pin.</value>
+        int GpioRightPin { get; set; }
+
+        /// <summary>Gets or sets the GPIO left pin.</summary>
+        /// <value>The GPIO left pin.</value>
+        int GpioLeftPin { get; set; }
     }
 }

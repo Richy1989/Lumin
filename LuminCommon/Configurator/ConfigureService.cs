@@ -14,16 +14,14 @@ namespace LuminCommon.Configurator
     public class ConfigureService : BackgroundService, IConfigureService
     {
         private readonly FileInfo configFile;
-        private readonly ILogger<ConfigureService> logger;
-
         private readonly ILuminConfiguration config;
+        private readonly ILogger<ConfigureService> logger;
 
         /// <summary>Initializes a new instance of the <see cref="ConfigureService" /> class.</summary>
         /// <param name="logger">The logger.</param>
         public ConfigureService(ILuminConfiguration luminConfig, ILogger<ConfigureService> logger)
         {
             this.logger = logger;
-
             config = luminConfig;
             logger.LogInformation("Loading Configuration File from: {0} ...", DefaultValues.UnixSavePath);
             configFile = new FileInfo(DefaultValues.UnixSavePath);
@@ -92,7 +90,6 @@ namespace LuminCommon.Configurator
                                 prop.GetValue(config),
                                 ex.Message);
                         }
-
                     }
                 }
             }

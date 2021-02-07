@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text;
 using LuminCommon.Defaults;
 
 namespace LuminCommon.Configurator
@@ -12,6 +11,8 @@ namespace LuminCommon.Configurator
         private int ledCount;
         private double autoOffTime;
         private int discoveryPort;
+        private int gpioLeftPin;
+        private int gpioRightPin;
 
         /// <summary>Occurs when [on configuration changed].</summary>
         public event EventHandler<EventArgs<string>> OnConfigurationChanged;
@@ -26,6 +27,8 @@ namespace LuminCommon.Configurator
                 Name = DefaultValues.DefaultClientName;
                 LedCount = DefaultValues.DefaultLedCount;
                 AutoOffTime = DefaultValues.DefaultAutoOffTime;
+                GpioLeftPin = DefaultValues.GpioLeftPin;
+                GpioRightPin = DefaultValues.GpioRightPin;
                 DiscoveryPort = DefaultDiscoveryValues.DiscoveryPort;
             }
             else
@@ -64,6 +67,8 @@ namespace LuminCommon.Configurator
             }
         }
 
+        /// <summary>Gets or sets the discovery port.</summary>
+        /// <value>The discovery port.</value>
         public int DiscoveryPort
         {
             get => discoveryPort;
@@ -94,6 +99,30 @@ namespace LuminCommon.Configurator
             set
             {
                 autoOffTime = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>Gets or sets the GPIO left pin.</summary>
+        /// <value>The GPIO left pin.</value>
+        public int GpioLeftPin
+        {
+            get => gpioLeftPin;
+            set
+            {
+                gpioLeftPin = value;
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>Gets or sets the GPIO right pin.</summary>
+        /// <value>The GPIO right pin.</value>
+        public int GpioRightPin
+        {
+            get => gpioRightPin;
+            set
+            {
+                gpioRightPin = value;
                 OnPropertyChanged();
             }
         }

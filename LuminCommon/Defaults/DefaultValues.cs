@@ -19,5 +19,9 @@ namespace LuminCommon.Defaults
         public static int DefaultLedCount = 58;
 
         public static int DefaultAutoOffTime = 1;
+
+        public static int GpioLeftPin = 17;
+
+        public static int GpioRightPin = 16;
     }
 }

@@ -1,23 +1,23 @@
-﻿using HeliosClockAPIStandard.Enumeration;
-using LuminCommon.Defaults;
-using LuminCommon.Enumerations;
-using LuminCommon.Interfaces;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Device.Gpio;
 using System.Device.Gpio.Drivers;
 using System.Diagnostics;
 using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
+using LuminCommon.Configurator;
+using LuminCommon.Defaults;
+using LuminCommon.Enumerations;
+using LuminCommon.Interfaces;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace HeliosClockAPIStandard.GPIOListeners
+namespace HeliosClockAPIStandard.GpioService
 {
-    public partial class GPIOService : BackgroundService
+    public partial class GpioService : BackgroundService
     {
         private readonly ILuminManager luminLedManager;
-        private readonly ILogger<GPIOService> logger;
+        private readonly ILogger<GpioService> logger;
         private GpioController gpioController;
 
         private readonly Stopwatch stopwatchLeft;
@@ -36,16 +36,19 @@ namespace HeliosClockAPIStandard.GPIOListeners
         private readonly Color onColor = DefaultColors.WarmWhite;
 
         public LedSide side;
+        private GpioInputPin gpioInputPin;
 
         /// <summary>Initializes a new instance of the <see cref="GPIOService"/> class.</summary>
         /// <param name="manager">The manager.</param>
-        public GPIOService(ILogger<GPIOService> logger, ILuminManager manager)
+        public GpioService(ILuminManager manager, ILuminConfiguration luminConfiguration, ILogger<GpioService> logger)
         {
             logger.LogInformation("Started GPIO Watch initializing ...");
             this.logger = logger;
             luminLedManager = manager;
             stopwatchLeft = new Stopwatch();
             stopwatchRight = new Stopwatch();
+
+            gpioInputPin = new GpioInputPin(luminConfiguration);
         }
 
         /// <summary>
@@ -69,8 +72,8 @@ namespace HeliosClockAPIStandard.GPIOListeners
 
             try
             {
-                gpioController.OpenPin((int)GpioInputPin.LeftSide, PinMode.InputPullDown);
-                gpioController.OpenPin((int)GpioInputPin.RightSide, PinMode.InputPullDown);
+                gpioController.OpenPin(gpioInputPin.LeftSide, PinMode.InputPullDown);
+                gpioController.OpenPin(gpioInputPin.RightSide, PinMode.InputPullDown);
 
                 var side = LedSide.Left;
 
@@ -78,14 +81,14 @@ namespace HeliosClockAPIStandard.GPIOListeners
                 {
                     isOn = luminLedManager.IsRunning;
 
-                    var input = gpioController.Read(side == LedSide.Left ? (int)GpioInputPin.LeftSide : (int)GpioInputPin.RightSide);
+                    var input = gpioController.Read(side == LedSide.Left ? gpioInputPin.LeftSide : gpioInputPin.RightSide);
                     await ExecuteTouchWatcher(side, input, side == LedSide.Left ? stopwatchLeft : stopwatchRight).ConfigureAwait(false);
                     side = side == LedSide.Left ? LedSide.Right : LedSide.Left;
                     await Task.Delay(5, stoppingToken).ConfigureAwait(false);
                 }
 
-                gpioController.ClosePin((int)GpioInputPin.LeftSide);
-                gpioController.ClosePin((int)GpioInputPin.RightSide);
+                gpioController.ClosePin(gpioInputPin.LeftSide);
+                gpioController.ClosePin(gpioInputPin.RightSide);
             }
             catch (Exception ex)
             {
@@ -194,11 +197,11 @@ namespace HeliosClockAPIStandard.GPIOListeners
         {
             try
             {
-                if (gpioController.IsPinOpen((int)GpioInputPin.LeftSide))
-                    gpioController.ClosePin((int)GpioInputPin.LeftSide);
+                if (gpioController.IsPinOpen(gpioInputPin.LeftSide))
+                    gpioController.ClosePin(gpioInputPin.LeftSide);
 
-                if (gpioController.IsPinOpen((int)GpioInputPin.RightSide))
-                    gpioController.ClosePin((int)GpioInputPin.RightSide);
+                if (gpioController.IsPinOpen(gpioInputPin.RightSide))
+                    gpioController.ClosePin(gpioInputPin.RightSide);
 
                 gpioController.Dispose();
             }
