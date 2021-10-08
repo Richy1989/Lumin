@@ -63,6 +63,13 @@ namespace HeliosClockAPIStandard
             };
 
             logger.LogInformation("Lumin Manager Initialized ...");
+
+            //Wait 500ms and turn the LEDs to black. Enusre it is black on startup.
+            Task.Run(async () =>
+            {
+                await Task.Delay(500).ConfigureAwait(false);
+                await SetOnOff(PowerOnOff.Off, LedSide.Full, Color.Black).ConfigureAwait(false);
+            });
         }
 
         /// <summary>Creates the automatic off timer.</summary>
@@ -181,15 +188,19 @@ namespace HeliosClockAPIStandard
         /// <param name="onColor">Color of the on.</param>
         public async Task SetOnOff(PowerOnOff onOff, LedSide side, Color onColor)
         {
-            if (onOff == PowerOnOff.On)
-            {
-                autoOffTmer.Start();
-            }
-            else
-            {
-                autoOffTmer.Stop();
-                await StopLedMode().ConfigureAwait(false);
-            }
+            ////if (onOff == PowerOnOff.On)
+            ////{
+            ////    autoOffTmer.Start();
+            ////}
+            ////else
+            ////{
+            ////    autoOffTmer.Stop();
+            ////    await StopLedMode().ConfigureAwait(false);
+            ///}
+            
+            await StopLedMode().ConfigureAwait(false);
+            autoOffTmer.Stop();
+            autoOffTmer.Start();
 
             LedController.IsSmoothing = false;
 
