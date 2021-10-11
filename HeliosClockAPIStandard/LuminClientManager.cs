@@ -65,13 +65,12 @@ namespace HeliosClockAPIStandard
 
             logger.LogInformation("Lumin Manager Initialized ...");
 
-            //////Wait 500ms and turn the LEDs to black. Enusre it is black on startup.
-            ////Task.Run(async () =>
-            ////{
-            ////    await Task.Delay(500).ConfigureAwait(false);
-            ////    await SetOnOff(PowerOnOff.Off, LedSide.Full, Color.Black, false).ConfigureAwait(false);
-            ////    //autoOffTmer.Enabled = false;
-            ////});
+            //Wait 500ms and turn the LEDs to black. Enusre it is black on startup.
+            Task.Run(async () =>
+            {
+                await Task.Delay(500).ConfigureAwait(false);
+                await SetOnOff(PowerOnOff.Off, LedSide.Full, Color.Black, false).ConfigureAwait(false);
+            });
         }
 
         /// <summary>Creates the automatic off timer.</summary>
@@ -92,7 +91,7 @@ namespace HeliosClockAPIStandard
             autoOffTmer.Elapsed += AutoOffTmer_Elapsed;
         }
 
-        //Reset Timer
+        /// <summary>Resets the AutoOff Timer.</summary>
         private async Task ResetTimer(PowerOnOff onOff)
         {
             await StopLedMode().ConfigureAwait(false);
@@ -148,8 +147,7 @@ namespace HeliosClockAPIStandard
         /// <param name="cancellationToken">The cancellation token.</param>
         public async Task SetColor(Color startColor, Color endColor, ColorInterpolationMode interpolationMode)
         {
-            autoOffTmer.Stop();
-            autoOffTmer.Start();
+            await ResetTimer(PowerOnOff.On).ConfigureAwait(false);
 
             var leds = new LedScreen(LedController);
 
@@ -190,7 +188,7 @@ namespace HeliosClockAPIStandard
         /// <param name="onColor">Color of the on.</param>
         public async Task SetOnOff(PowerOnOff onOff, LedSide side, Color onColor)
         {
-            await SetOnOff(onOff, side, onColor, false);
+            await SetOnOff(onOff, side, onColor, false).ConfigureAwait(false);
         }
 
         /// <summary>Sets the LEDs either On or Off.</summary>
@@ -199,14 +197,8 @@ namespace HeliosClockAPIStandard
         /// <param name="onColor">Color of the on.</param>
         public async Task SetOnOff(PowerOnOff onOff, LedSide side, Color onColor, bool ignoreTimer)
         {
-            await StopLedMode().ConfigureAwait(false);
-            autoOffTmer.Stop();
+            await ResetTimer(onOff).ConfigureAwait(false);
 
-            if (onOff == PowerOnOff.On)
-            {
-                autoOffTmer.Start();
-            }
-            
             ////else
             ////{
             ////    await StopLedMode().ConfigureAwait(false);       
@@ -268,9 +260,7 @@ namespace HeliosClockAPIStandard
         /// <param name="cancellationToken">The cancellation token.</param>
         public async Task RunLedMode(LedMode mode)
         {
-            await StopLedMode().ConfigureAwait(false);
-            autoOffTmer.Stop();
-            autoOffTmer.Start();
+            await ResetTimer(PowerOnOff.On).ConfigureAwait(false);
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
