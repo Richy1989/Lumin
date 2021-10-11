@@ -60,6 +60,10 @@ CheckForProgram () {
 
 ##Main Program###
 
+#Install needed tools
+apt update
+apt install git wget -y
+
 #Default Values
 clientName="Bed Room"
 ledCount=58
@@ -86,15 +90,28 @@ serverServicePath="/etc/systemd/system/"$serverServiceName
 discoveryPort=8080
 signalPort=5000
 
-netCoreDownloadFileName="dotnet-sdk-5.0.102-linux-arm64.tar.gz"
+if [ $(uname -m)  = 'aarch64' ]; then
+	echo "Using ARM64 Link for dotNet -->" 
+	netCoreDownloadFileName="dotnet-sdk-6.0.100-rc.1.21463.6-linux-arm64.tar.gz"
+	netCoreLink="https://download.visualstudio.microsoft.com/download/pr/c56c49ce-176e-4472-bd0c-5667475790f2/018c2de72f984826afe4b1b87715f1c0/dotnet-sdk-6.0.100-rc.1.21463.6-linux-arm64.tar.gz"
+fi
 
-#check and install dotNet 5.0
+if [ $(uname -m)  = 'x86_64' ]; then
+	echo "Using X64 Link for dotNet -->" 
+	netCoreDownloadFileName="dotnet-sdk-6.0.100-rc.1.21463.6-linux-x64.tar.gz"
+	netCoreLink="https://download.visualstudio.microsoft.com/download/pr/5fcb98bb-21e1-47a5-bb8e-bb25f41a3e52/04811d5d05b7e694f040d2a13c1aae4c/dotnet-sdk-6.0.100-rc.1.21463.6-linux-x64.tar.gz"
+fi
+
+ #netCoreDownloadFileName="dotnet-sdk-6.0.100-rc.1.21463.6-linux-arm64.tar.gz"
+
+#check and install dotNet 6.0
 isInstalled=$(CheckForProgram "dotnet")
 if [ $isInstalled ]
 then
 	dotnetPath=$(which dotnet)
 else
-	wget "https://download.visualstudio.microsoft.com/download/pr/4fdd4708-8990-42db-998d-36ccfa593070/d67cb90c382e4eedbca8af1aebcbbe19/dotnet-sdk-5.0.102-linux-arm64.tar.gz"
+	wget $netCoreLink
+
 	mkdir $dotnetPath
 	export PATH=$PATH:$dotnetPath
 	export DOTNET_ROOT=$dotnetPath
@@ -150,9 +167,13 @@ tempFolder=".lumin_temp"
 MakeDirWithUserPermissions $tempFolder $userName
 cd $tempFolder
 git clone $releaseRepository
+
+#Needed for .net
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
 dotnet publish "Lumin/LuminServer/LuminServer.csproj"
 actualFolder=$(pwd)
-cd "Lumin/LuminServer/bin/Debug/net5.0/publish/"
+cd "Lumin/LuminServer/bin/Debug/net6.0/publish/"
 cp -R * $installPath
 #Change installpath to user permissions
 ChangeToUserPermissions $installPath $userName
