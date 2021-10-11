@@ -44,6 +44,10 @@ namespace LuminCommon.Interfaces
         /// <param name="onOff">The on off.</param>
         Task SetOnOff(PowerOnOff onOff, LedSide side, Color color);
 
+        /// <summary>Sets the on off.</summary>
+        /// <param name="onOff">The on off.</param>
+        Task SetOnOff(PowerOnOff onOff, LedSide side, Color color, bool ignoreTimer);
+
         /// <summary>Runs the led mode.</summary>
         /// <param name="mode">The mode.</param>
         Task RunLedMode(LedMode mode);

@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using LuminClientControlAPI.Modes;
 using LuminCommon.Attributes;
 using LuminCommon.Configurator;
 using LuminCommon.Enumerations;
@@ -64,12 +65,13 @@ namespace HeliosClockAPIStandard
 
             logger.LogInformation("Lumin Manager Initialized ...");
 
-            //Wait 500ms and turn the LEDs to black. Enusre it is black on startup.
-            Task.Run(async () =>
-            {
-                await Task.Delay(500).ConfigureAwait(false);
-                await SetOnOff(PowerOnOff.Off, LedSide.Full, Color.Black).ConfigureAwait(false);
-            });
+            //////Wait 500ms and turn the LEDs to black. Enusre it is black on startup.
+            ////Task.Run(async () =>
+            ////{
+            ////    await Task.Delay(500).ConfigureAwait(false);
+            ////    await SetOnOff(PowerOnOff.Off, LedSide.Full, Color.Black, false).ConfigureAwait(false);
+            ////    //autoOffTmer.Enabled = false;
+            ////});
         }
 
         /// <summary>Creates the automatic off timer.</summary>
@@ -88,6 +90,18 @@ namespace HeliosClockAPIStandard
             logger.LogDebug("Starting auto off timer with interval: {0} hour ...", timeInHours);
             autoOffTmer = new System.Timers.Timer(AutoOffTime);
             autoOffTmer.Elapsed += AutoOffTmer_Elapsed;
+        }
+
+        //Reset Timer
+        private async Task ResetTimer(PowerOnOff onOff)
+        {
+            await StopLedMode().ConfigureAwait(false);
+            autoOffTmer.Stop();
+
+            if (onOff == PowerOnOff.On)
+            {
+                autoOffTmer.Start();
+            }
         }
 
         /// <summary>Notifies the controllers.</summary>
@@ -170,37 +184,41 @@ namespace HeliosClockAPIStandard
             LedController.IsSmoothing = false;
         }
 
-        /// <summary>Stops the led mode.</summary>
-        public async Task StopLedMode()
-        {
-            cancellationTokenSource?.Cancel();
-
-            while (IsModeRunning && !cancellationToken.IsCancellationRequested)
-                await Task.Delay(1).ConfigureAwait(false);
-
-            cancellationTokenSource = new CancellationTokenSource();
-            cancellationToken = cancellationTokenSource.Token;
-        }
-
         /// <summary>Sets the LEDs either On or Off.</summary>
         /// <param name="onOff">The on off.</param>
         /// <param name="side">The side.</param>
         /// <param name="onColor">Color of the on.</param>
         public async Task SetOnOff(PowerOnOff onOff, LedSide side, Color onColor)
         {
-            ////if (onOff == PowerOnOff.On)
-            ////{
-            ////    autoOffTmer.Start();
-            ////}
-            ////else
-            ////{
-            ////    autoOffTmer.Stop();
-            ////    await StopLedMode().ConfigureAwait(false);
-            ///}
-            
+            await SetOnOff(onOff, side, onColor, false);
+        }
+
+        /// <summary>Sets the LEDs either On or Off.</summary>
+        /// <param name="onOff">The on off.</param>
+        /// <param name="side">The side.</param>
+        /// <param name="onColor">Color of the on.</param>
+        public async Task SetOnOff(PowerOnOff onOff, LedSide side, Color onColor, bool ignoreTimer)
+        {
             await StopLedMode().ConfigureAwait(false);
             autoOffTmer.Stop();
-            autoOffTmer.Start();
+
+            if (onOff == PowerOnOff.On)
+            {
+                autoOffTmer.Start();
+            }
+            
+            ////else
+            ////{
+            ////    await StopLedMode().ConfigureAwait(false);       
+            ////}
+
+            //Ignore the timer on initialization Turn off from constructor.
+            ////if (!ignoreTimer)
+            ////{
+            ////    await StopLedMode().ConfigureAwait(false);
+            ////    autoOffTmer?.Stop();
+            ////    autoOffTmer?.Start();
+            ////}
 
             LedController.IsSmoothing = false;
 
@@ -233,6 +251,18 @@ namespace HeliosClockAPIStandard
             EndColor = LedController.ActualScreen[LedController.ActualScreen.Length - 1].LedColor;
         }
 
+        /// <summary>Stops the led mode.</summary>
+        public async Task StopLedMode()
+        {
+            cancellationTokenSource?.Cancel();
+
+            while (IsModeRunning && !cancellationToken.IsCancellationRequested)
+                await Task.Delay(1).ConfigureAwait(false);
+
+            cancellationTokenSource = new CancellationTokenSource();
+            cancellationToken = cancellationTokenSource.Token;
+        }
+
         /// <summary>Runs the led mode.</summary>
         /// <param name="mode">The mode.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
@@ -248,24 +278,26 @@ namespace HeliosClockAPIStandard
             {
                 IsModeRunning = true;
                 runningLedMode = mode;
-                
+                ILEDMode ledMode = null;
                 try
                 {
                     switch (mode)
                     {
                         case LedMode.Spin:
-                            await SpinLeds(cancellationToken).ConfigureAwait(false);
+                            ledMode = new SpinLEDsMode();
                             break;
 
                         case LedMode.KnightRider:
-                            await KnightRiderMode(cancellationToken).ConfigureAwait(false);
+                            ledMode = new KnightRiderMode();
                             break;
                         case LedMode.Disco:
-                            await DiscoMode(cancellationToken).ConfigureAwait(false);
+                            ledMode = new DiscoMode();
                             break;
                         default:
                             break;
                     }
+
+                    await ledMode.RunMode(this, cancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -281,101 +313,6 @@ namespace HeliosClockAPIStandard
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
             await Task.CompletedTask.ConfigureAwait(false);
-        }
-
-        /// <summary>Spins the LEDs.</summary>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        private async Task SpinLeds(CancellationToken cancellationToken)
-        {
-            var oldOffest = LedController.PixelOffset;
-
-            try
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    LedController.PixelOffset++;
-                    await Task.Delay(RefreshSpeed, cancellationToken).ConfigureAwait(false);
-                    if (LedController.PixelOffset >= LedController.LedCount)
-                    {
-                        LedController.PixelOffset = 0;
-                    }
-                    await LedController.Repaint().ConfigureAwait(false);
-                }
-            }
-            catch
-            {
-            }
-            finally
-            {
-                LedController.PixelOffset = oldOffest;
-                await LedController.Repaint().ConfigureAwait(false);
-            }
-        }
-
-        /// <summary>Starts Knights Rider mode.</summary>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        private async Task KnightRiderMode(CancellationToken cancellationToken)
-        {
-            await Task.Run(async () =>
-            {
-                int ledCount = LedController.LedCount;
-
-                //20% of LEDs used for Knight rider mode
-                int knightCount = (int)Math.Round(((double)ledCount / 100.0 * 20.0), 0);
-
-                var leds = new LedScreen(LedController);
-
-                int colorCount = 1;
-                int startIndex = 0;
-
-                bool isClockwise = true;
-
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var colors = await ColorHelpers.DimColor(StartColor, knightCount, true).ConfigureAwait(false);
-
-                    for (int i = 0; i < ledCount; i++)
-                    {
-                        int index = isClockwise ? i : ledCount - i - 1;
-
-                        if (i >= startIndex && i < startIndex + colorCount)
-                            leds.SetPixel(ref index, colors[i - startIndex]);
-                        else
-                            leds.SetPixel(ref index, Color.Black);
-
-                    }
-
-                    if (colorCount < knightCount)
-                        colorCount++;
-
-                    await LedController.SendPixels(leds.pixels).ConfigureAwait(false);
-
-                    startIndex++;
-
-                    if (startIndex >= ledCount)
-                    {
-                        colorCount = 1;
-                        startIndex = 0;
-                        isClockwise = !isClockwise;
-                    }
-
-                    await Task.Delay(RefreshSpeed, cancellationToken).ConfigureAwait(false);
-                }
-            }, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>Starts the disco the mode.</summary>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        private async Task DiscoMode(CancellationToken cancellationToken)
-        {
-            await Task.Run(async () =>
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    await SetRandomColor().ConfigureAwait(false);
-                    await Task.Delay(RefreshSpeed, cancellationToken).ConfigureAwait(false);
-                }
-            }, cancellationToken);
         }
 
         /// <summary>Disposes the specified disposing.</summary>
